@@ -8,7 +8,7 @@ auto main(int argc, char *argv[]) -> int
     QCoreApplication a(argc, argv);
 
     Ticket::qtRegister();
-    store::initDb();
+    store::initDb("192.168.56.1");
 
     auto server = Server();
     constexpr qint16 Port = 2339;

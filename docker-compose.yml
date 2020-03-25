@@ -1,0 +1,14 @@
+version: "3"
+
+services:
+  database:
+    image: "mysql:8.0"
+    ports:
+      - "3306:3306"
+    volumes:
+      - "./pg_data:/var/lib/mysql"
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+      MYSQL_USER: oleg
+      MYSQL_PASSWORD: oleg_312b4a6b229587d831dd4a05fc83d4f7
+      MYSQL_DB: olegdb

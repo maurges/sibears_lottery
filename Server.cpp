@@ -9,9 +9,11 @@
 
 
 ClientHandler::~ClientHandler()
-{}
+{
+}
 Server::~Server()
-{}
+{
+}
 
 
 Server::Server(QObject* parent)
@@ -161,7 +163,7 @@ void ClientHandler::regPass(QByteArray&& data)
 {
     let db = store::connectDb();
     m_subject.password = QString::fromUtf8(data.trimmed());
-    let success = store::setUser(db, m_subject);
+    let success = store::createUser(db, m_subject);
     if (not success)
     {
         m_socket->write("Failed to register."
@@ -437,9 +439,4 @@ void ClientHandler::reloadObject()
 {
     let mbUser = store::getUser(store::connectDb(), m_object.name);
     m_object = *mbUser;
-}
-
-
-Server::Server(QObject* parent)
-{
 }

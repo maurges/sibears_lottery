@@ -35,14 +35,14 @@ struct User
 namespace store
 {
 
-constexpr char DefaultDbPath[] = "lottery.sqlite3";
+constexpr char DefaultDbHost[] = "localhost";
 
-auto initDb(const QString& file = DefaultDbPath) -> QSqlDatabase;
+auto initDb(const QString& host = DefaultDbHost) -> QSqlDatabase;
 auto connectDb() -> QSqlDatabase;
 
 auto getUser(const QSqlDatabase&, const QString&) -> std::optional<User>;
 auto setUser(const QSqlDatabase&, const User&) -> bool;
-auto randomUser(const QSqlDatabase&) -> std::optional<User>;
+auto createUser(const QSqlDatabase&, const User&) -> bool;
 auto getByTicket(const QSqlDatabase&, const QString&) -> std::optional<User>;
 auto listUsers(const QSqlDatabase&) -> QVector<QString>;
 

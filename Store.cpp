@@ -41,10 +41,10 @@ auto Ticket::toHex() const -> QString
 {
     auto printableStr = QString("'");
     auto unprintStr = QString("X'");
-    auto printable = true;
+    bool printable = true;
     for (int i = 0; i < DataSize; ++i)
     {
-        int c = data[i];
+        let c = static_cast<unsigned int>(data[i]);
         printable = printable && QChar::isPrint(c);
         if (printable)  printableStr.append(QChar(c));
         if (c < 16)  unprintStr.append("0");
@@ -62,7 +62,7 @@ namespace
 constexpr char SqliteConnectionName[] = "LotteryDb";
 
 
-auto throwSqlError(const QSqlError& err) -> void
+[[ noreturn ]] auto throwSqlError(const QSqlError& err) -> void
 {
     throw std::runtime_error(err.text().toStdString());
 }
@@ -89,20 +89,14 @@ inline auto tryExecute(QSqlQuery& query, const QString& text) -> QSqlQuery&
 }
 
 
-auto createQtDatabase(const QString& filename) -> QSqlDatabase
+auto createQtDatabase(const QString& hostname) -> QSqlDatabase
 {
-    let dbPath =
-        QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) +
-        "/";
-
-    if (not QDir(dbPath).exists())  QDir().mkdir(dbPath);
-    qDebug() << dbPath;
-
-    let dbName = dbPath + filename;
-    qDebug() << "opening database" << dbName;
-
-    auto db = QSqlDatabase::addDatabase("QSQLITE", SqliteConnectionName);
-    db.setDatabaseName(dbName);
+    auto db = QSqlDatabase::addDatabase("QMYSQL", SqliteConnectionName);
+    db.setHostName(hostname);
+    db.setPort(3306);
+    db.setDatabaseName("olegdb");
+    db.setUserName("oleg");
+    db.setPassword("oleg_312b4a6b229587d831dd4a05fc83d4f7");
 
     throwDbErrWhen(not db.open(), db);
 
@@ -114,6 +108,7 @@ auto initDbTables(QSqlDatabase& db) -> QSqlDatabase&
     let tables = db.tables();
     if (    tables.contains("users")
         and tables.contains("trades")
+        and tables.contains("trades_temp")
        )
     {
         return db;
@@ -121,12 +116,12 @@ auto initDbTables(QSqlDatabase& db) -> QSqlDatabase&
 
     auto q = QSqlQuery(db);
     tryExecute(q, "create table if not exists users "
-                  "( rowid        integer primary key"
-                  ", name         text unique"
+                  "( rowid        integer primary key auto_increment"
+                  ", name         text"
                   ", password     text not null"
                   ", won_recently integer"
                   ", ticket       blob"
-                  ")"
+                  ");"
               );
     tryExecute(q, "create table if not exists trades "
                   "( origin integer"
@@ -134,12 +129,19 @@ auto initDbTables(QSqlDatabase& db) -> QSqlDatabase&
                   ", foreign key(origin) references users(rowid)"
                   ", foreign key(target) references users(rowid)"
                   ", unique (origin, target)"
-                  ")"
+                  ");"
+              );
+    tryExecute(q, "create table if not exists trades_temp "
+                  "( rowid  integer primary key auto_increment"
+                  ", origin text"
+                  ", target text"
+                  ");"
               );
     tryExecute(q, "insert into users (name, password) values"
-                  "('admin', 'ZVwXtuORgXLfaLtBIqqDwCuD4MthWHTS')"
+                  "('admin', 'ZVwXtuORgXLfaLtBIqqDwCuD4MthWHTS');"
               );
     db.commit();
+    qDebug() << "created tables";
 
     return db;
 }
@@ -150,9 +152,9 @@ auto initDbTables(QSqlDatabase& db) -> QSqlDatabase&
 namespace store
 {
 
-auto initDb(const QString& filename) -> QSqlDatabase
+auto initDb(const QString& hostname) -> QSqlDatabase
 {
-    auto&& db = createQtDatabase(filename);
+    auto&& db = createQtDatabase(hostname);
     return initDbTables(db);
 }
 
@@ -184,7 +186,11 @@ auto getUser(const QSqlDatabase& db, const QString& name)
             , query.value(3).value<Ticket>()
             };
 
-        query.prepare("select origin from trades where target = ?");
+        query.prepare("select o.name from trades"
+                      " join users o on o.rowid = origin"
+                      " join users t on t.rowid = target"
+                      " where t.name = ?"
+                     );
         query.addBindValue(name);
         tryExecute(query);
         while (query.next())
@@ -192,7 +198,7 @@ auto getUser(const QSqlDatabase& db, const QString& name)
             user.pendingTrades.append(query.value(0).toString());
         }
 
-        return user;
+        return {user};
     }
     catch (std::exception& e)
     {
@@ -206,26 +212,29 @@ auto setUser(const QSqlDatabase& db, const User& user) -> bool
     auto query = QSqlQuery(db);
     try
     {
-        query.prepare("delete from users where name = ?");
-        query.addBindValue(user.name);
-        tryExecute(query);
-
         query.prepare(
-            QString("insert into users (name, password, won_recently, ticket)"
-                    " values (?, ?, ?, %1)")
-            .arg(user.ticket.toHex())
+            QString("update users set"
+                    " name = ?"
+                    ",password = ?"
+                    ",won_recently = ?"
+                    ",ticket = %1"
+                    " where name = ?"
+                   ).arg(user.ticket.toHex())
         );
         query.addBindValue(user.name);
         query.addBindValue(user.password);
         query.addBindValue(user.wonRecently);
+        query.addBindValue(user.name);
         tryExecute(query);
 
-        query.prepare("delete from trades where target = ?");
+        query.prepare("delete trades from trades"
+                      " join users on target = rowid where name = ?"
+                     );
         query.addBindValue(user.name);
         tryExecute(query);
 
         if (user.pendingTrades.isEmpty())  return true;
-        auto insertReqs = QString("insert into trades (origin, target) values ");
+        auto insertReqs = QString("insert into trades_temp (origin, target) values ");
         for (let& originName : user.pendingTrades)
         {
             // По первой задумке в этом сервисе должны были быть sql-инъекции,
@@ -238,6 +247,12 @@ auto setUser(const QSqlDatabase& db, const User& user) -> bool
         }
         insertReqs.chop(1); // the comma
         tryExecute(query, insertReqs);
+        tryExecute(query, "insert into trades (origin, target)"
+                          " select u1.rowid, u2.rowid from trades_temp"
+                          " join users u1 on u1.name = origin"
+                          " join users u2 on u2.name = target"
+                  );
+        tryExecute(query, "delete from trades_temp");
 
         return true;
     }
@@ -248,19 +263,20 @@ auto setUser(const QSqlDatabase& db, const User& user) -> bool
     }
 }
 
-auto randomUser(const QSqlDatabase& db) -> std::optional<User>
+auto createUser(const QSqlDatabase& db, const User& user) -> bool
 {
     auto query = QSqlQuery(db);
     try
     {
-        let randomQuery =
-            "select name from users limit 1"
-            " offset abs(random() % (select count(*) from users))";
-        tryExecute(query, randomQuery);
-
-        if (not query.next())  return {};
-        let name = query.value(0).toString();
-        return getUser(db, name);
+        auto query = QSqlQuery(db);
+        query.prepare(
+            "insert into users (name, password)"
+            " values (?, ?)"
+        );
+        query.addBindValue(user.name);
+        query.addBindValue(user.password);
+        tryExecute(query);
+        return true;
     }
     catch (std::exception& e)
     {
