@@ -1,0 +1,5 @@
+.mypy_cache/
+build/
+compile_commands.json
+checker/__pycache__/
+checker/storage-*-*.dump
