@@ -11,6 +11,8 @@ from asyncio import open_connection, get_event_loop, StreamReader, StreamWriter
 from traceback import TracebackException
 from typing import Optional, NoReturn, Dict, Tuple, Set
 
+import helper
+
 OK, CORRUPT, MUMBLE, DOWN, CHECKER_ERROR = 101, 102, 103, 104, 110
 PORT = 2339
 
@@ -81,7 +83,7 @@ async def auth_user(store, name, pwd) -> Tuple[StreamReader, StreamWriter]:
     store.dump()
     return (reader, writer)
 
-async def auth_admin(store) -> Tuple[StreamReader, StreamWriter]:
+async def auth_admin(host: str, store) -> Tuple[StreamReader, StreamWriter]:
     async with admin_lock:
         reader, writer = await open_connection(host, PORT)
         await timed(reader.readuntil(b": "))
@@ -92,6 +94,9 @@ async def auth_admin(store) -> Tuple[StreamReader, StreamWriter]:
         new_pwd_str = await timed(reader.readline())
 
         if new_pwd_str == b"Incorrect password\n":
+            r = helper.change_remote_password(host, store.admin_password)
+            if not r:
+                verdict(CHECKER_ERROR, "Checker Error", "Couldn't reset admin password")
             mumble("Bad admin password")
 
         awaited_prefix = b"New password: '"
@@ -112,13 +117,13 @@ async def check(store: Storage, host: str) -> NoReturn:
 
     async def check_admin_names() -> None:
         user = random.choice(list(store.users.keys()))
-        reader, writer = await auth_admin(store)
+        reader, writer = await auth_admin(host, store)
         writer.write(b"name\n")
         await timed(reader.readuntil(b": "))
         writer.write(user + b"\n")
         resp = await timed(reader.readuntil(b"> "))
         if not resp.endswith(b"has won\n> "):
-            mumble("Can't win user by name")
+            corrupt("Can't win user by name")
 
     async def check_show() -> None:
         user = random.choice(list(store.users.keys()))
@@ -211,7 +216,7 @@ async def put_flag(store: Storage, host: str, flag_id: str, flag_data: str, vuln
 
 async def get_flag(store: Storage, host: str, flag_id: str, flag_data: str, vuln
         ) -> NoReturn:
-    reader, writer = await auth_admin(store)
+    reader, writer = await auth_admin(host, store)
     writer.write(b"number\n")
     await timed(reader.readuntil(b": "))
     writer.write(flag_data.encode() + b"\n")

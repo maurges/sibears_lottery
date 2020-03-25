@@ -1,5 +1,5 @@
 .mypy_cache/
 build/
 compile_commands.json
-checker/__pycache__/
+__pycache__/
 checker/storage-*-*.dump
