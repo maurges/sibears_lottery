@@ -1,5 +1,9 @@
 .mypy_cache/
-build/
+build*/
 compile_commands.json
 __pycache__/
-checker/storage-*-*.dump
+storage-*-*.dump
+oleg-service.pro.user
+pg_data/
+*.tgz
+*.tar.gz
