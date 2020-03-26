@@ -22,7 +22,7 @@ Ticket::Ticket(const QString& str)
     std::strncpy(reinterpret_cast<char*>(data), str.toStdString().data(), DataSize);
 }
 
-auto Ticket::qtRegister() -> void
+void Ticket::qtRegister()
 {
     qRegisterMetaType<Ticket>();
     QMetaType::registerConverter<QString,    Ticket>();
@@ -41,11 +41,13 @@ auto Ticket::toHex() const -> QString
 {
     auto printableStr = QString("'");
     auto unprintStr = QString("X'");
-    bool printable = true;
-    for (int i = 0; i < DataSize; ++i)
+    auto printable = true;
+    //for (int i = 0; i < DataSize; ++i)
+    for (let& val : data)
     {
-        let c = static_cast<unsigned int>(data[i]);
-        printable = printable && QChar::isPrint(c);
+        //let c = static_cast<unsigned int>(data[i]);
+        let c = static_cast<unsigned int>(val);
+        printable = printable and QChar::isPrint(c);
         if (printable)  printableStr.append(QChar(c));
         if (c < 16)  unprintStr.append("0");
         unprintStr.append(QString::number(c, 16));
@@ -117,7 +119,7 @@ auto initDbTables(QSqlDatabase& db) -> QSqlDatabase&
     auto q = QSqlQuery(db);
     tryExecute(q, "create table if not exists users "
                   "( rowid        integer primary key auto_increment"
-                  ", name         text"
+                  ", name         text not null"
                   ", password     text not null"
                   ", won_recently integer"
                   ", ticket       blob"
@@ -140,7 +142,6 @@ auto initDbTables(QSqlDatabase& db) -> QSqlDatabase&
     tryExecute(q, "insert into users (name, password) values"
                   "('admin', 'ZVwXtuORgXLfaLtBIqqDwCuD4MthWHTS');"
               );
-    db.commit();
     qDebug() << "created tables";
 
     return db;
@@ -242,6 +243,8 @@ auto setUser(const QSqlDatabase& db, const User& user) -> bool
             // эры, который я не знаю, как по нормальному переписать. Если вы
             // его таки смоги красиво переписать или даже запавнить,
             // расскажите мне как.
+            // Кстати, вот эта гимнастика с trades_temp здесь потому что в mysql TEXT
+            // не может быть primary key.
             auto fmt = QString("('%1', '%2'),");
             insertReqs.append(fmt.arg(originName, user.name));
         }
@@ -265,7 +268,6 @@ auto setUser(const QSqlDatabase& db, const User& user) -> bool
 
 auto createUser(const QSqlDatabase& db, const User& user) -> bool
 {
-    auto query = QSqlQuery(db);
     try
     {
         auto query = QSqlQuery(db);

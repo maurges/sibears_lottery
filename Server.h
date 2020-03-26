@@ -37,7 +37,6 @@ class ClientHandler : public QObject
     ,   AdminAwaitCommand = 0x100
     ,   AdminAwaitWinName
     ,   AdminAwaitWinNumber
-    ,   AdminAwaitRandomAccept
     };
 
 
@@ -63,7 +62,6 @@ private:
     void adminCommand(QByteArray&&);
     void adminWinName(QByteArray&&);
     void adminWinNumber(QByteArray&&);
-    void adminRandomAccept(QByteArray&&);
     // helpers
     auto menuBanner()
         -> void;

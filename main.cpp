@@ -5,7 +5,7 @@
 
 auto main(int argc, char *argv[]) -> int
 {
-    QCoreApplication a(argc, argv);
+    auto app = QCoreApplication(argc, argv);
 
     Ticket::qtRegister();
     store::initDb("192.168.56.1");
@@ -14,6 +14,5 @@ auto main(int argc, char *argv[]) -> int
     constexpr qint16 Port = 2339;
     server.listen(QHostAddress::Any, Port);
 
-    return a.exec();
+    return app.exec();
 }
-

@@ -96,9 +96,6 @@ void ClientHandler::gotData()
         case State::AdminAwaitWinNumber:
             adminWinNumber(std::move(data));
             return;
-        case State::AdminAwaitRandomAccept:
-            adminRandomAccept(std::move(data));
-            return;
     }
 
     // redo if we still have lines left
@@ -234,9 +231,9 @@ void ClientHandler::userTicket(QByteArray&& data)
     {
         if (index > Ticket::DataSize)  break;
 
-        bool ok = true;
+        auto ok = true;
         let num = word.toInt(&ok) % 256;
-        m_subject.ticket.data[index] = num;
+        m_subject.ticket.data[index] = static_cast<qint8>(num);
 
         if (not ok)
         {
@@ -393,21 +390,6 @@ void ClientHandler::adminWinNumber(QByteArray&& data)
     }
     m_state = State::AdminAwaitCommand;
 }
-
-void ClientHandler::adminRandomAccept(QByteArray&& data)
-{
-    if (data.isEmpty() or data.at(0) != 'y')
-    {
-        m_socket->write("Aborted\n");
-        m_state = State::AdminAwaitCommand;
-        return;
-    }
-    m_object.wonRecently = true;
-    store::setUser(store::connectDb(), m_object);
-    m_socket->write(m_object.name.toUtf8() + " has won, yay\n");
-    m_state = State::AdminAwaitCommand;
-}
-
 
 void ClientHandler::menuBanner()
 {

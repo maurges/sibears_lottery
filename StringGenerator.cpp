@@ -14,7 +14,7 @@ void StringGenerator::reseed(const QString& str)
     for (let& unicode : str)
     {
         let mixer = m_dis(m_gen);
-        let c = unicode.toLatin1();
+        let c = static_cast<unsigned char>(unicode.toLatin1());
         m_gen.seed(mixer + c);
     }
 }
