@@ -2,8 +2,8 @@
 import asyncio
 import async_lensocket
 import ssl
-import random
-from OpenSSL import crypto #type: ignore
+import mysql.connector
+from subprocess import run, PIPE
 
 ClientPublicKey = """-----BEGIN CERTIFICATE-----
 MIIDgDCCAmigAwIBAgIJAPFuOkrGV1AgMA0GCSqGSIb3DQEBCwUAMFUxCzAJBgNV
@@ -32,13 +32,30 @@ ServerPkeyFile = "./private_key.pem"
 PORT = 2340
 
 def change_password(password: str) -> None:
-    print("password changed to " + password)
+    # stop the service
+    r = run(["systemctl", "stop", "lottery.service"], stdout=PIPE, stderr=PIPE)
+    if r.returncode != 0:
+        raise RuntimeError("Couldn't stop the process")
+    # change password in db directly
+    conn = mysql.connector.connect(user="oleg", password="oleg_2874c71881c3682f215be2f23e8173c4", host="localhost", database="olegdb")
+    cur = conn.cursor()
+    query = "update users set password = %s where name = 'admin'"
+    cur.execute(query, (password,))
+    conn.commit()
+    conn.close()
+    # start the service again
+    r = run(["systemctl", "start", "lottery.service"], stdout=PIPE, stderr=PIPE)
+    if r.returncode != 0:
+        raise RuntimeError("Couldn't stop the process")
 
 async def handler(reader, writer) -> None:
     print("Got a new connection")
     new_password = await reader.read()
-    change_password(new_password.decode())
-    writer.write(b"ok")
+    try:
+        change_password(new_password.decode())
+        writer.write(b"ok")
+    except Exception:
+        writer.write(b"failure")
 
 
 if __name__ == "__main__":

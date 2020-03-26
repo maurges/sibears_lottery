@@ -98,7 +98,7 @@ auto createQtDatabase(const QString& hostname) -> QSqlDatabase
     db.setPort(3306);
     db.setDatabaseName("olegdb");
     db.setUserName("oleg");
-    db.setPassword("oleg_312b4a6b229587d831dd4a05fc83d4f7");
+    db.setPassword("oleg_2874c71881c3682f215be2f23e8173c4");
 
     throwDbErrWhen(not db.open(), db);
 

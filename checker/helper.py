@@ -38,10 +38,7 @@ async def change_remote_password(host: str, password: bytes) -> bool:
     reader, writer = await open_connection(host, PORT, ssl=context)
     writer.write(password)
     resp = await reader.read()
-    if resp != b"ok":
-        return False
-    else:
-        return True
+    return resp == b"ok"
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

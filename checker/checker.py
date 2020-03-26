@@ -94,7 +94,7 @@ async def auth_admin(host: str, store) -> Tuple[StreamReader, StreamWriter]:
         new_pwd_str = await timed(reader.readline())
 
         if new_pwd_str == b"Incorrect password\n":
-            r = helper.change_remote_password(host, store.admin_password)
+            r = await helper.change_remote_password(host, store.admin_password)
             if not r:
                 verdict(CHECKER_ERROR, "Checker Error", "Couldn't reset admin password")
             mumble("Bad admin password")
