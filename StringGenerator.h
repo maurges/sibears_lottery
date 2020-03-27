@@ -7,9 +7,8 @@
 
 class StringGenerator
 {
-    // Lewis, Goodman, Miller parameters for base 256
-    std::linear_congruential_engine<unsigned char, 167, 0, 255> m_gen;
-    std::uniform_int_distribution<unsigned char> m_dis;
+    std::mt19937 m_gen;
+    std::uniform_int_distribution<std::uint_fast32_t> m_dis;
 
 public:
     StringGenerator(const QString&);
