@@ -65,8 +65,8 @@ class Storage:
             default.dump()
             return default
 
-async def timed(aw):
-    return await asyncio.wait_for(aw, timeout=5.0)
+async def timed(aw, timeout=5.0):
+    return await asyncio.wait_for(aw, timeout=timeout)
 
 admin_lock = asyncio.Lock()
 exchange_lock = asyncio.Lock()
