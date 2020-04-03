@@ -274,7 +274,7 @@ if __name__ == "__main__":
         command = sys.argv[1]
         host = sys.argv[2]
 
-        dbname = f"storage-{host}-{PORT}.dump"
+        dbname = f"storage-oleg-{host}-{PORT}.dump"
         store = Storage.load(dbname)
         loop = get_event_loop()
 
