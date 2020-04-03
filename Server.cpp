@@ -289,12 +289,6 @@ void ClientHandler::userAcceptName(QByteArray&& data)
         m_socket->write("Bad name\n");
         m_state = State::UserAwaitCommand;
     }
-    else if (not m_subject.pendingTrades.contains(name))
-    {
-        // XXX: make this a vuln?
-        m_socket->write("Bad name\n");
-        m_state = State::UserAwaitCommand;
-    }
     else
     {
         m_object = *mbUser;
