@@ -7,6 +7,8 @@ The service is made up of a Qt C++ service and a python3 subservice.
 
 Service, checker, description: d86leader
 
+Sploits: [Alamov Vldimir](https://github.com/RockThisParty), [Komarova Tatyana](https://github.com/alex8h)
+
 ## Requirements
 
 - C++17 compiler (g++>=8.0, clang++>=8.0, g++=9.0 works)
@@ -42,4 +44,6 @@ Checker also will dump and read its database to and from CWD.
 
 ### Exploits
 
-[first sploit](./sploits/lottery_1.py)
+[First sploit](./sploits/lottery_1.py)
+
+[Second sploit](./sploits/lottery_2.py)
