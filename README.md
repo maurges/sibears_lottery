@@ -6,6 +6,7 @@ The service is made up of a Qt C++ service and a python3 subservice.
 ## Authors
 
 Service, checker, description: d86leader
+Sploits:[Alamov Vldimir](https://github.com/RockThisParty), [Komarova Tatyana](https://github.com/alex8h)
 
 ## Requirements
 
@@ -42,6 +43,6 @@ Checker also will dump and read its database to and from CWD.
 
 ### Exploits
 
-[First sploit](./sploits/lottery_1.py) Author [Alamov Vldimir](https://github.com/RockThisParty)
+[First sploit](./sploits/lottery_1.py)
 
-[Second sploit](./sploits/lottery_2.py) Author [Komarova Tatyana](https://github.com/alex8h)
+[Second sploit](./sploits/lottery_2.py)
