@@ -6,7 +6,8 @@ The service is made up of a Qt C++ service and a python3 subservice.
 ## Authors
 
 Service, checker, description: d86leader
-Sploits:[Alamov Vldimir](https://github.com/RockThisParty), [Komarova Tatyana](https://github.com/alex8h)
+
+Sploits: [Alamov Vldimir](https://github.com/RockThisParty), [Komarova Tatyana](https://github.com/alex8h)
 
 ## Requirements
 
