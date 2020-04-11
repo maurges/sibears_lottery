@@ -42,4 +42,4 @@ Checker also will dump and read its database to and from CWD.
 
 ### Exploits
 
-TODO
+[first sploit](./sploits/lottery_1.py)
