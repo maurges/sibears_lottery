@@ -47,3 +47,5 @@ Checker also will dump and read its database to and from CWD.
 [First sploit](./sploits/lottery_1.py)
 
 [Second sploit](./sploits/lottery_2.py)
+
+[Third sploit](./sploits/lottery_3.py)
