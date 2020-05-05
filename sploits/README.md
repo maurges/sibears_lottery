@@ -1,4 +1,4 @@
-## Run sploit
+## Run sploit lottery_2.py
 
 1. Copy oleg-service in new folder `sploited_oleg_service`
 2. Enter new folder
