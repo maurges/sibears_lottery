@@ -7,3 +7,4 @@ oleg-service.pro.user
 pg_data/
 *.tgz
 *.tar.gz
+mysql-data/

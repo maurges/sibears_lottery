@@ -2,8 +2,10 @@
 import asyncio
 import async_lensocket
 import ssl
-import mysql.connector
-from subprocess import run, PIPE
+import sys
+import mysql.connector # type: ignore
+from asyncio import create_subprocess_exec
+from typing import Optional
 
 ClientPublicKey = """-----BEGIN CERTIFICATE-----
 MIIDgDCCAmigAwIBAgIJAPFuOkrGV1AgMA0GCSqGSIb3DQEBCwUAMFUxCzAJBgNV
@@ -31,28 +33,38 @@ ServerCertFile = "./cert.pem"
 ServerPkeyFile = "./private_key.pem"
 PORT = 2340
 
-def change_password(password: str) -> None:
-    # stop the service
-    r = run(["systemctl", "stop", "lottery.service"], stdout=PIPE, stderr=PIPE)
-    if r.returncode != 0:
-        raise RuntimeError("Couldn't stop the process")
-    # change password in db directly
-    conn = mysql.connector.connect(user="oleg", password="oleg_2874c71881c3682f215be2f23e8173c4", host="localhost", database="olegdb")
-    cur = conn.cursor()
-    query = "update users set password = %s where name = 'admin'"
-    cur.execute(query, (password,))
-    conn.commit()
-    conn.close()
-    # start the service again
-    r = run(["systemctl", "start", "lottery.service"], stdout=PIPE, stderr=PIPE)
-    if r.returncode != 0:
-        raise RuntimeError("Couldn't stop the process")
+running_instance: Optional[asyncio.subprocess.Process] = None
+lock = asyncio.Lock()
+
+async def change_password(password: str) -> None:
+    global running_instance
+    async with lock:
+        # stop the service
+        if running_instance is None:
+            print("Trying to kill a dead process")
+            return
+        running_instance.terminate()
+        await running_instance.wait()
+        running_instance = None
+
+        # change password in db directly
+        conn = mysql.connector.connect(user="oleg", password="oleg_2874c71881c3682f215be2f23e8173c4", host="localhost", database="olegdb")
+        cur = conn.cursor()
+        query = "update users set password = %s where name = 'admin'"
+        cur.execute(query, (password,))
+        conn.commit()
+        conn.close()
+
+        # start the service again
+        running_instance = await create_subprocess_exec(
+            "/home/lottery/build/oleg-service"
+        )
 
 async def handler(reader, writer) -> None:
     print("Got a new connection")
     new_password = await reader.read()
     try:
-        change_password(new_password.decode())
+        await change_password(new_password.decode())
         writer.write(b"ok")
     except Exception:
         writer.write(b"failure")
@@ -66,6 +78,14 @@ if __name__ == "__main__":
     context.verify_mode = ssl.CERT_REQUIRED
     loop = asyncio.get_event_loop()
     async def server() -> None:
+        # wait for mysql to start
+        await asyncio.sleep(3.0)
+        # create base service
+        running_instance = await create_subprocess_exec(
+            "/home/lottery/build/oleg-service"
+        )
+        print("running", file=sys.stderr)
+
         s = await async_lensocket.start_server(handler, "0.0.0.0", PORT, ssl=context)
         await s.wait_closed()
     loop.run_until_complete(server())
