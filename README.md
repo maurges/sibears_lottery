@@ -13,9 +13,9 @@ Sploits: [Alamov Vldimir](https://github.com/RockThisParty), [Komarova Tatyana](
 
 - C++17 compiler (g++>=8.0, clang++>=8.0, g++=9.0 works)
 - QtCore, QtNetwork, QtSql >= 5.9 (5.14 works)
-- mysql>=15.1
+- libQt5Sql5-mysql for QtSql
 - python3>=3.6.10
-- python3-aiomysql=0.0.20
+- mysql-connector-python==8.0.18
 - systemctl
 
 ## Setup
