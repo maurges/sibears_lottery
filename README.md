@@ -20,10 +20,9 @@ Sploits: [Alamov Vldimir](https://github.com/RockThisParty), [Komarova Tatyana](
 
 ## Setup
 
-1. Run `make` to build c++ service in th `build` directory
-2. Create systemctl service named `lottery.service` with binary `build/oleg-service`
-3. Run helper service as root with cwd `./helper`, it uses the ssl keys located there
-4. Run the checker with cwd `./checker`, it uses the ssl keys located there
+1. To build: run `make` to build c++ service in th `build` directory
+3. To start: run helper service with cwd `./helper`, it uses the ssl keys located there
+4. To check: run the checker with cwd `./checker`, it uses the ssl keys located there
 
 Checker also will dump and read its database to and from CWD.
 
